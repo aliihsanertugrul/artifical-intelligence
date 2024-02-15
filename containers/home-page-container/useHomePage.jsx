@@ -4,10 +4,15 @@ import { createContext, useContext, useState, useMemo } from "react"
 const HomePageContext = createContext();
 
 export const HomePageProvider = ({ children }) => {
-  const [prompt, setPrompt] = useState("");
+  const [prompt, setPrompt] = useState("")
+  const [image, setImage] = useState(null)
+  const [error, setError] = useState(null)
+  const [isSubmitting, setSubmitting] = useState(false)
+  // console.log("image***",image)
 
   const generateImage = async() => {
     try {
+      setSubmitting(true)
         const response=await fetch("/api/generate",{
             method:"POST",
             headers: {
@@ -18,14 +23,19 @@ export const HomePageProvider = ({ children }) => {
             }),
         })
 
-        if(!response.ok) throw new Error("Something is wrong")
+        if(!response.ok) throw new Error(response.statusText || response.status)
 
         const generatedImage=await response.json();
         
+        setImage(generatedImage[0])
+        setError(null)
+        
 
     } catch (error) {
-        throw new Error("Failed to generate")
+      setError(error)
+       
     }
+    setSubmitting(false)
   };
 
    const changePrompt = (newPrompt) => {
@@ -33,8 +43,8 @@ export const HomePageProvider = ({ children }) => {
     window.scrollTo(0,0);
    }
 
-  const data = useMemo(() => ({prompt,setPrompt,generateImage,changePrompt}), [prompt]);
-//   console.log(prompt)
+  const data = useMemo(() => ({prompt,setPrompt,generateImage,changePrompt,image,error,isSubmitting}), [prompt,image,error,isSubmitting]);
+
   return (
     <HomePageContext.Provider value={data}>{children}</HomePageContext.Provider>
   );
